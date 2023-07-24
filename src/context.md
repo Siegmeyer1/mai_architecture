@@ -7,10 +7,14 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 Person(user, "Пользователь")
+Person(admin, "Администратор")
 
 System(messenger, "Мессенджер", "Веб-сайт для обмена сообщениями")
 
 Rel(user, messenger, "Регистрация, чтение/отправка сообщений в личных и групповых чатах, создание групповых чатов")
+
+Rel(admin, messenger, "Мониторинг активности, помощь в случае ошибок")
+
 
 @enduml
 ```
