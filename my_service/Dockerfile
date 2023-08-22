@@ -6,5 +6,5 @@ RUN git clone -b master https://github.com/pocoproject/poco.git && cd poco && mk
 ADD http://date.jsontest.com /etc/builddate
 RUN git clone https://github.com/Siegmeyer1/mai_architecture.git
 RUN sudo ldconfig
-RUN cd mai_architecture && mkdir build && cd build && cmake ../src && make
-ENTRYPOINT [ "mai_architecture/build/other_service" ]
+RUN cd mai_architecture && mkdir build && cd build && cmake .. && make
+ENTRYPOINT [ "mai_architecture/build/app" ]
