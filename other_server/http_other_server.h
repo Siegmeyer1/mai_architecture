@@ -93,9 +93,12 @@ using Poco::Util::ServerApplication;
 #include <iostream>
 #include <string>
 #include <fstream>
-
 #include <optional>
+
 #include "../helper.h"
+#include "../database/message.h"
+#include "../database/group.h"
+
 
 class OtherHandler : public HTTPRequestHandler
 {
@@ -171,14 +174,141 @@ public:
             if(std::getenv("SERVICE_HOST")!=nullptr) host = std::getenv("SERVICE_HOST");
             url = "http://" + host+":8080/auth";
 
-            if (do_get(url, login, password)) // do authentificate
+            auto auth_response = do_get(url, login, password);
+            if (auth_response) // do authentificate
             {
+                long user_id;
+                Poco::JSON::Parser parser;
+                Poco::Dynamic::Var result = parser.parse(*auth_response);
+                Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
+                user_id = object->getValue<long>("id");
 
-                response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_OK);
+                if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET &&
+                    hasSubstr(request.getURI(), "/list") &&
+                    form.has("user_id"))
+                {
+                    long other_id = std::atol(form.get("user_id").c_str());
+                    auto results = database::Message::list_chat(user_id, other_id);
+                    Poco::JSON::Array arr;
+                    for (auto s : results)
+                    {
+                        Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                        root->set("message", std::get<0>(s).toJSON());
+                        root->set("from_requester", std::get<1>(s));
+                        arr.add(root);
+                    }
+                    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
+                    std::ostream &ostr = response.send();
+                    Poco::JSON::Stringifier::stringify(arr, ostr);
+
+                    return;
+                }
+
+                else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST &&
+                         hasSubstr(request.getURI(), "/send") &&
+                         form.has("text") && form.has("to"))
+                {
+                    database::Message message;
+                    message.text() = form.get("text");
+                    message.author_id() = user_id;
+                    message.recipient_id() = std::atol(form.get("to").c_str());
+                    message.save_to_mysql();
+
+                    response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                    response.setChunkedTransferEncoding(true);
+                    response.setContentType("application/json");
+                    std::ostream &ostr = response.send();
+                    Poco::JSON::Stringifier::stringify(message.toJSON(), ostr);
+
+                    return;
+                }
+
+                else if (hasSubstr(request.getURI(), "/groups"))
+                {
+                    if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST &&
+                        hasSubstr(request.getURI(), "/send") &&
+                        form.has("text") && form.has("group_id"))
+                    {
+                        database::Message message;
+                        message.text() = form.get("text");
+                        message.author_id() = user_id;
+                        message.group_id() = std::atol(form.get("group_id").c_str());
+                        message.save_to_mysql(true);
+
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                        response.setChunkedTransferEncoding(true);
+                        response.setContentType("application/json");
+                        std::ostream &ostr = response.send();
+                        Poco::JSON::Stringifier::stringify(message.toJSON(), ostr);
+
+                        return;
+                    }
+                    else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST &&
+                             hasSubstr(request.getURI(), "/add_user") &&
+                             form.has("user_id") && form.has("group_id"))
+                    {
+                        long group_id = std::atol(form.get("group_id").c_str());
+                        auto group = database::Group::get_by_id(group_id);
+                        if (group && group->admin_id() == user_id)
+                        {
+                            group->add_user(std::atol(form.get("user_id").c_str()));
+                            response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                            response.setChunkedTransferEncoding(true);
+                            response.setContentType("application/json");
+                            Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                            root->set("status", "OK");
+                            std::ostream &ostr = response.send();
+                            Poco::JSON::Stringifier::stringify(root, ostr);
+                            return;
+                        }
+                    }
+                    else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_POST && form.has("title"))
+                    {
+                        std::cout << "[DEBUG] trying to create group" << std::endl;
+                        database::Group group;
+                        group.admin_id() = user_id;
+                        group.title() = form.get("title");
+                        group.save_to_mysql();
+
+                        response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                        response.setChunkedTransferEncoding(true);
+                        response.setContentType("application/json");
+                        std::ostream &ostr = response.send();
+                        Poco::JSON::Stringifier::stringify(group.toJSON(), ostr);
+                    }
+                    else if (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET && form.has("group_id"))
+                    {
+                        long group_id = std::atol(form.get("group_id").c_str());
+                        auto group = database::Group::get_by_id(group_id);
+                        if (group)
+                        {
+                            auto results = group->list_messages(user_id);
+                            Poco::JSON::Array arr;
+                            for (auto s : results)
+                            {
+                                Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
+                                root->set("message", std::get<0>(s).toJSON());
+                                root->set("from_requester", std::get<1>(s));
+                                arr.add(root);
+                            }
+                            response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+                            response.setChunkedTransferEncoding(true);
+                            response.setContentType("application/json");
+                            std::ostream &ostr = response.send();
+                            Poco::JSON::Stringifier::stringify(arr, ostr);
+
+                            return;
+                        }
+                    }
+                }
+
+                response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_BAD_REQUEST);
                 response.setChunkedTransferEncoding(true);
                 response.setContentType("application/json");
                 Poco::JSON::Object::Ptr root = new Poco::JSON::Object();
-                root->set("result", "some result");
+                root->set("detail", "bad url/data");
                 std::ostream &ostr = response.send();
                 Poco::JSON::Stringifier::stringify(root, ostr);
                 return;
@@ -212,8 +342,12 @@ public:
 
     HTTPRequestHandler *createRequestHandler([[maybe_unused]] const HTTPServerRequest &request)
     {
-
-        return new OtherHandler(_format);
+        std::cout << "request:" << request.getURI()<< std::endl;
+        if (hasSubstr(request.getURI(), "/list") ||
+            hasSubstr(request.getURI(), "/send") ||
+            hasSubstr(request.getURI(), "/groups"))        
+            return new OtherHandler(_format);
+        return 0;
     }
 
 private:
@@ -247,6 +381,8 @@ protected:
     {
         if (!_helpRequested)
         {
+            database::Group::init();
+            database::Message::init();
             ServerSocket svs(Poco::Net::SocketAddress("0.0.0.0", 8081));
             HTTPServer srv(new HTTPOtherRequestFactory(DateTimeFormat::SORTABLE_FORMAT), svs, new HTTPServerParams);
             srv.start();

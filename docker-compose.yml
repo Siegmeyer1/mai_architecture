@@ -45,6 +45,7 @@ services:
     depends_on:
       mai-db-node-ex01:
         condition: service_healthy
+        
   other_server:
     build:
       context: other_server

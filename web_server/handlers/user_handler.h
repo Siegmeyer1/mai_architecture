@@ -46,20 +46,20 @@ using Poco::Util::ServerApplication;
 #include "../../database/user.h"
 #include "../../helper.h"
 
-static bool hasSubstr(const std::string &str, const std::string &substr)
-{
-    if (str.size() < substr.size())
-        return false;
-    for (size_t i = 0; i <= str.size() - substr.size(); ++i)
-    {
-        bool ok{true};
-        for (size_t j = 0; ok && (j < substr.size()); ++j)
-            ok = (str[i + j] == substr[j]);
-        if (ok)
-            return true;
-    }
-    return false;
-}
+// static bool hasSubstr(const std::string &str, const std::string &substr)
+// {
+//     if (str.size() < substr.size())
+//         return false;
+//     for (size_t i = 0; i <= str.size() - substr.size(); ++i)
+//     {
+//         bool ok{true};
+//         for (size_t j = 0; ok && (j < substr.size()); ++j)
+//             ok = (str[i + j] == substr[j]);
+//         if (ok)
+//             return true;
+//     }
+//     return false;
+// }
 
 class UserHandler : public HTTPRequestHandler
 {
@@ -128,11 +128,19 @@ public:
         HTMLForm form(request, request.stream());
         try
         {
-            if (form.has("id") && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
+            if ((form.has("id") || form.has("login")) && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
             {
-                long id = atol(form.get("id").c_str());
-
-                std::optional<database::User> result = database::User::read_by_id(id);
+                std::optional<database::User> result;
+                if (form.has("id"))
+                {
+                    long id = atol(form.get("id").c_str());
+                    result = database::User::read_by_id(id);
+                }
+                else
+                {
+                    std::string login = form.get("login");
+                    result = database::User::read_by_login(login);
+                }
                 if (result)
                 {
                     response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
