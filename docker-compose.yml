@@ -27,28 +27,75 @@ services:
     volumes:
       - db-node-ex01-data:/var/lib/mysql
 
+  mai-db-node-ex02:
+    build:
+      context: mariadb
+      dockerfile: Dockerfile
+    container_name: mai-db-node-ex02
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: archdb
+      MYSQL_USER: stud
+      MYSQL_PASSWORD: stud
+      MYSQL_ROOT_PASSWORD: '1'
+    command: >
+      --sql-mode='STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'
+      --general-log=ON
+      --log-queries-not-using-indexes=ON
+    networks:
+      - arch-network
+    ports:
+      - 3361:3306
+    healthcheck:
+      test: "/usr/bin/mariadb --user=stud --password=stud --execute \"SHOW DATABASES;\""
+      timeout: 20s
+      retries: 5
+    volumes:
+      - db-node-ex02-data:/var/lib/mysql
+
+  sharded-db:
+    build:
+      context: proxysql
+    healthcheck:
+      test: "/usr/bin/mysql -h 127.0.0.1 -P 6033 --user=stud --password=stud --execute \"SHOW DATABASES;\""
+      timeout: 20s
+      retries: 5
+    networks:
+      - arch-network
+    ports:
+      # Mysql Client Port
+      - 6033:6033
+      # Mysql Admin Port
+      - 6032:6032
+    depends_on:
+      - mai-db-node-ex01
+      - mai-db-node-ex02
+    volumes:
+      - proxysql-data:/var/lib/proxysql
+
   my_service:
     build:
-      context: my_service
+      context: .
       dockerfile: Dockerfile
     container_name: my_service
     environment:
-      - DB_HOST=mai-db-node-ex01
-      - DB_PORT=3306
+      - DB_HOST=sharded-db
+      - DB_PORT=6033
       - DB_LOGIN=stud
       - DB_PASSWORD=stud
       - DB_DATABASE=archdb
     ports:
       - 8080:8080
+    entrypoint: /mai_architecture/build/app
     networks:
       - arch-network
     depends_on:
-      mai-db-node-ex01:
+      sharded-db:
         condition: service_healthy
         
   other_server:
     build:
-      context: other_server
+      context: .
       dockerfile: Dockerfile
     container_name: other_server
     environment:
@@ -60,14 +107,17 @@ services:
       - DB_DATABASE=archdb
     ports:
       - 8081:8081
+    entrypoint: /mai_architecture/build/other_service
     networks:
       - arch-network
     depends_on:
-      mai-db-node-ex01:
+      sharded-db:
         condition: service_healthy
 
 volumes:
   db-node-ex01-data:
+  db-node-ex02-data:
+  proxysql-data:
 
 networks:
   arch-network:
