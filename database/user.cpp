@@ -303,7 +303,9 @@ namespace database
                     into(tmp_id),
                     range(0, 1); //  iterate over result set one row at a time
 
+                std::cout << "[DEBUG] tmp_id before execute (" << hint << "): " << tmp_id << std::endl;
                 select.execute();
+                std::cout << "[DEBUG] tmp_id after execute (" << hint << "): " << tmp_id << std::endl;
                 Poco::Data::RecordSet rs(select);
                 if (rs.moveFirst()) {
                     _id = std::max(_id, tmp_id);
