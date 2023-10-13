@@ -279,7 +279,7 @@ public:
         }
         catch (std::exception& ex)
         {
-            std::cout << "ERROR:" << ex.what() << std::endl;
+            std::cout << "ERROR: " << ex.what() << std::endl;
         }
 
         response.setStatus(Poco::Net::HTTPResponse::HTTPStatus::HTTP_NOT_FOUND);

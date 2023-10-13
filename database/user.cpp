@@ -296,8 +296,8 @@ namespace database
             Poco::Data::Session session = database::Database::get().create_session();
 
             _id = 0;    // это криво и может привести к гонке и дублировании айдишников, но хоть как-то обеспечивает уникальность id
-            long tmp_id = 0;
             for (const auto& hint : database::Database::get_all_sharding_hints()) {
+                long tmp_id = 0;
                 Statement select(session);
                 select << "SELECT MAX(`id`) from `User`" + hint,
                     into(tmp_id),
@@ -305,8 +305,10 @@ namespace database
 
                 select.execute();
                 Poco::Data::RecordSet rs(select);
-                if (rs.moveFirst()) _id = std::max(_id, tmp_id);
-                std::cout << "[DEBUG] Max id on shard " << hint << ": " << tmp_id << std::endl;
+                if (rs.moveFirst()) {
+                    _id = std::max(_id, tmp_id);
+                    std::cout << "[DEBUG] Max id on shard " << hint << ": " << tmp_id << std::endl;
+                }
             }
             _id += 1;
 
