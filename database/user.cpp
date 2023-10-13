@@ -294,9 +294,27 @@ namespace database
         try
         {
             Poco::Data::Session session = database::Database::get().create_session();
+
+            _id = 0;    // это криво и может привести к гонке и дублировании айдишников, но хоть как-то обеспечивает уникальность id
+            long tmp_id = 0;
+            for (const auto& hint : database::Database::get_all_sharding_hints()) {
+                Statement select(session);
+                select << "SELECT LAST_INSERT_ID()" + hint,
+                    into(tmp_id),
+                    range(0, 1); //  iterate over result set one row at a time
+
+                if (!select.done())
+                {
+                    select.execute();
+                }
+                _id = std::max(_id, tmp_id);
+            }
+            _id += 1;
+
             Poco::Data::Statement insert(session);
 
-            insert << "INSERT INTO User (first_name,last_name,email,title,login,password) VALUES(?, ?, ?, ?, ?, ?)" + get_sharding_hint(),
+            insert << "INSERT INTO User (id,first_name,last_name,email,title,login,password) VALUES(?, ?, ?, ?, ?, ?, ?)" + get_sharding_hint(),
+                use(_id),
                 use(_first_name),
                 use(_last_name),
                 use(_email),
@@ -306,15 +324,6 @@ namespace database
 
             insert.execute();
 
-            Poco::Data::Statement select(session);
-            select << "SELECT LAST_INSERT_ID()" + get_sharding_hint(),
-                into(_id),
-                range(0, 1); //  iterate over result set one row at a time
-
-            if (!select.done())
-            {
-                select.execute();
-            }
             std::cout << "inserted:" << _id << std::endl;
         }
         catch (Poco::Data::MySQL::ConnectionException &e)
