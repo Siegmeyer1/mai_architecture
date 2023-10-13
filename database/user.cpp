@@ -308,6 +308,7 @@ namespace database
                     select.execute();
                 }
                 _id = std::max(_id, tmp_id);
+                std::cout << "[DEBUG] Max id on shard " << hint << ": " << tmp_id << std::endl;
             }
             _id += 1;
 
