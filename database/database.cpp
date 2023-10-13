@@ -28,4 +28,28 @@ namespace database{
         return Poco::Data::Session(_pool->get());
     }
 
+    size_t Database::get_max_shard(){
+        return 2;
+    }
+
+    std::string Database::get_sharding_hint(long hash){
+        size_t shard_number = hash % get_max_shard();
+
+        std::string result = "-- sharding:";
+        result += std::to_string(shard_number);
+        return result;
+    }
+
+    std::vector<std::string> Database::get_all_sharding_hints() {
+        std::vector<std::string> res;
+        size_t max_shards = get_max_shard();
+
+        res.reserve(max_shards);
+        for (size_t i = 0; i < max_shards; ++i) {
+            res.push_back(get_sharding_hint(i));
+        }
+
+    return res;
+    }
+
 }

@@ -27,22 +27,26 @@ namespace database
         {
 
             Poco::Data::Session session = database::Database::get().create_session();
-            Statement create_stmt(session);
-            create_stmt << "CREATE TABLE IF NOT EXISTS `Group` (`id` INT NOT NULL AUTO_INCREMENT,"
-                        << "`title` VARCHAR(256) NULL,"
-                        << "`admin_id` INT NOT NULL,"
-                        << "FOREIGN KEY (admin_id) REFERENCES User (id),"
-                        << "PRIMARY KEY (`id`),KEY `a_id` (`admin_id`));",     
-                    now;
+            for (const auto& hint : database::Database::get_all_sharding_hints()) {
+                Statement create_stmt(session);
+                create_stmt << "CREATE TABLE IF NOT EXISTS `Group` (`id` INT NOT NULL AUTO_INCREMENT,"
+                            << "`title` VARCHAR(256) NULL,"
+                            << "`admin_id` INT NOT NULL,"
+                            << "FOREIGN KEY (admin_id) REFERENCES User (id),"
+                            << "PRIMARY KEY (`id`),KEY `a_id` (`admin_id`));"
+                            << hint,     
+                        now;
 
-            Statement another_create_stmt(session);
-            another_create_stmt << "CREATE TABLE IF NOT EXISTS `GroupMembership` ("
-                                << "`group_id` INT NOT NULL,"
-                                << "`user_id` INT NOT NULL,"
-                                << "FOREIGN KEY (`group_id`) REFERENCES `Group` (id) ON DELETE CASCADE,"
-                                << "FOREIGN KEY (`user_id`) REFERENCES `User` (id) ON DELETE CASCADE,"
-                                << "PRIMARY KEY (`group_id`, `user_id`));",
-                            now;
+                Statement another_create_stmt(session);
+                another_create_stmt << "CREATE TABLE IF NOT EXISTS `GroupMembership` ("
+                                    << "`group_id` INT NOT NULL,"
+                                    << "`user_id` INT NOT NULL,"
+                                    << "FOREIGN KEY (`group_id`) REFERENCES `Group` (id) ON DELETE CASCADE,"
+                                    << "FOREIGN KEY (`user_id`) REFERENCES `User` (id) ON DELETE CASCADE,"
+                                    << "PRIMARY KEY (`group_id`, `user_id`));"
+                                    << hint,
+                                now;
+            }
         }
 
         catch (Poco::Data::MySQL::ConnectionException &e)

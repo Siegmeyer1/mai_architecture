@@ -25,17 +25,22 @@ namespace database
         {
 
             Poco::Data::Session session = database::Database::get().create_session();
-            Statement create_stmt(session);
-            create_stmt << "CREATE TABLE IF NOT EXISTS `User` (`id` INT NOT NULL AUTO_INCREMENT,"
-                        << "`first_name` VARCHAR(256) NOT NULL,"
-                        << "`last_name` VARCHAR(256) NOT NULL,"
-                        << "`login` VARCHAR(256) NOT NULL,"
-                        << "`password` VARCHAR(256) NOT NULL,"
-                        << "`email` VARCHAR(256) NULL,"
-                        << "`title` VARCHAR(1024) NULL,"
-                        << "UNIQUE(`email`),UNIQUE(`login`),"
-                        << "PRIMARY KEY (`id`),KEY `fn` (`first_name`),KEY `ln` (`last_name`));",
-                now;
+            std::cout << "[DEBUG] start creating User table on shards" << std::endl;
+            for (const auto& hint : database::Database::get_all_sharding_hints()) {
+                Statement create_stmt(session);
+                std::cout << "[DEBUG] hint: " << hint << std::endl;
+                create_stmt << "CREATE TABLE IF NOT EXISTS `User` (`id` INT NOT NULL AUTO_INCREMENT,"
+                            << "`first_name` VARCHAR(256) NOT NULL,"
+                            << "`last_name` VARCHAR(256) NOT NULL,"
+                            << "`login` VARCHAR(256) NOT NULL,"
+                            << "`password` VARCHAR(256) NOT NULL,"
+                            << "`email` VARCHAR(256) NULL,"
+                            << "`title` VARCHAR(1024) NULL,"
+                            << "UNIQUE(`email`),UNIQUE(`login`),"
+                            << "PRIMARY KEY (`id`),KEY `fn` (`first_name`),KEY `ln` (`last_name`));"
+                            << hint,
+                    now;
+            }
         }
 
         catch (Poco::Data::MySQL::ConnectionException &e)
@@ -91,7 +96,7 @@ namespace database
             Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement select(session);
             long id;
-            select << "SELECT id FROM User where login=? and password=?",
+            select << "SELECT id FROM `User` where login=? and password=?",
                 into(id),
                 use(login),
                 use(password),

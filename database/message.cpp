@@ -26,18 +26,21 @@ namespace database
         {
 
             Poco::Data::Session session = database::Database::get().create_session();
-            Statement create_stmt(session);
-            create_stmt << "CREATE TABLE IF NOT EXISTS `Message` (`id` INT NOT NULL AUTO_INCREMENT,"
-                        << "`text` VARCHAR(4096) NULL,"
-                        << "`created_at` DATETIME NOT NULL DEFAULT NOW(),"
-                        << "`author_id` INT NOT NULL,"
-                        << "`recipient_id` INT,"
-                        << "`group_id` INT,"
-                        << "FOREIGN KEY (author_id)  REFERENCES User (id) ON DELETE CASCADE,"
-                        << "FOREIGN KEY (recipient_id)  REFERENCES User (id) ON DELETE CASCADE,"
-                        << "FOREIGN KEY (group_id)  REFERENCES `Group` (id) ON DELETE CASCADE,"
-                        << "PRIMARY KEY (`id`),KEY `a_id` (`author_id`),KEY `r_id` (`recipient_id`));",
-                now;
+            for (const auto& hint : database::Database::get_all_sharding_hints()) {
+                Statement create_stmt(session);
+                create_stmt << "CREATE TABLE IF NOT EXISTS `Message` (`id` INT NOT NULL AUTO_INCREMENT,"
+                            << "`text` VARCHAR(4096) NULL,"
+                            << "`created_at` DATETIME NOT NULL DEFAULT NOW(),"
+                            << "`author_id` INT NOT NULL,"
+                            << "`recipient_id` INT,"
+                            << "`group_id` INT,"
+                            << "FOREIGN KEY (author_id)  REFERENCES User (id) ON DELETE CASCADE,"
+                            << "FOREIGN KEY (recipient_id)  REFERENCES User (id) ON DELETE CASCADE,"
+                            << "FOREIGN KEY (group_id)  REFERENCES `Group` (id) ON DELETE CASCADE,"
+                            << "PRIMARY KEY (`id`),KEY `a_id` (`author_id`),KEY `r_id` (`recipient_id`));"
+                            << hint,
+                    now;
+            }
         }
 
         catch (Poco::Data::MySQL::ConnectionException &e)

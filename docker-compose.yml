@@ -100,8 +100,8 @@ services:
     container_name: other_server
     environment:
       - SERVICE_HOST=my_service
-      - DB_HOST=mai-db-node-ex01
-      - DB_PORT=3306
+      - DB_HOST=sharded-db
+      - DB_PORT=6033
       - DB_LOGIN=stud
       - DB_PASSWORD=stud
       - DB_DATABASE=archdb
