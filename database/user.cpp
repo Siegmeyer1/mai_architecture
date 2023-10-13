@@ -100,7 +100,7 @@ namespace database
             User user;
             user.login() = login;
             user.password() = password;
-            select << "SELECT id FROM `User` where login=? and password=?" + user.get_sharding_hint(),
+            select << "SELECT id FROM `User` where login=? and password=?;" + user.get_sharding_hint(),
                 into(id),
                 use(login),
                 use(password),
@@ -130,7 +130,8 @@ namespace database
             User a;
             for (const auto& hint : database::Database::get_all_sharding_hints()) {
                 Poco::Data::Statement select(session);
-                select << "SELECT id, first_name, last_name, email, title,login,password FROM User where id=?" + hint,
+                std::cout << "[DEBUG] SELECT id, first_name, last_name, email, title, login, password FROM User where id=" << id << ';' + hint << std::endl;
+                select << "SELECT id, first_name, last_name, email, title, login, password FROM User where id=?;" + hint,
                     into(a._id),
                     into(a._first_name),
                     into(a._last_name),
