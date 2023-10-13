@@ -294,8 +294,9 @@ public:
         catch (Poco::Data::MySQL::MySQLException &e)
         {
 
-            std::cout << "statement:" << e.what() << std::endl;
+            std::cout << "error: " << e.what() << std::endl;
             std::cout << "details: " << e.message() << std::endl;
+            std::cout << "details: " << e.displayText() << std::endl;
         }
 
         catch (std::exception& ex)
