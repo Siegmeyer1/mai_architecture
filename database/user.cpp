@@ -314,6 +314,7 @@ namespace database
             }
             _id += 1;
 
+            Poco::Data::Session session = database::Database::get().create_session();
             Poco::Data::Statement insert(session);
 
             insert << "INSERT INTO User (id,first_name,last_name,email,title,login,password) VALUES(?, ?, ?, ?, ?, ?, ?)" + get_sharding_hint(),

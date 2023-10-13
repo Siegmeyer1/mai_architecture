@@ -1,6 +1,7 @@
 #ifndef USEHANDLER_H
 #define USEHANDLER_H
 
+#include <Poco/Data/MySQL/MySQLException.h>
 #include "Poco/Net/HTTPServer.h"
 #include "Poco/Net/HTTPRequestHandler.h"
 #include "Poco/Net/HTTPRequestHandlerFactory.h"
@@ -277,10 +278,29 @@ public:
                 }
             }
         }
+
+        catch (Poco::Data::MySQL::ConnectionException &e)
+        {
+            std::cout << "connection:" << e.what() << std::endl;
+            std::cout << "details: " << e.message() << std::endl;
+        }
+        catch (Poco::Data::MySQL::StatementException &e)
+        {
+
+            std::cout << "statement:" << e.what() << std::endl;
+            std::cout << "details: " << e.message() << std::endl;
+        }
+
+        catch (Poco::Data::MySQL::MySQLException &e)
+        {
+
+            std::cout << "statement:" << e.what() << std::endl;
+            std::cout << "details: " << e.message() << std::endl;
+        }
+
         catch (std::exception& ex)
         {
             std::cout << "ERROR: " << ex.what() << std::endl;
-            throw;
 
         }
 
