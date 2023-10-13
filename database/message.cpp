@@ -34,10 +34,7 @@ namespace database
                             << "`author_id` INT NOT NULL,"
                             << "`recipient_id` INT,"
                             << "`group_id` INT,"
-                            << "FOREIGN KEY (author_id)  REFERENCES User (id) ON DELETE CASCADE,"
-                            << "FOREIGN KEY (recipient_id)  REFERENCES User (id) ON DELETE CASCADE,"
-                            << "FOREIGN KEY (group_id)  REFERENCES `Group` (id) ON DELETE CASCADE,"
-                            << "PRIMARY KEY (`id`),KEY `a_id` (`author_id`),KEY `r_id` (`recipient_id`));"
+                            << "PRIMARY KEY (`id`),KEY `a_id` (`author_id`),KEY `r_id` (`recipient_id`),KEY `g_id` (`group_id`));"
                             << hint,
                     now;
             }

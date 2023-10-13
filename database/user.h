@@ -18,6 +18,8 @@ namespace database
             std::string _login;
             std::string _password;
 
+            std::string get_sharding_hint();
+
         public:
 
             static User fromJSON(const std::string & str);

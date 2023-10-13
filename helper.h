@@ -35,3 +35,15 @@ static bool hasSubstr(const std::string &str, const std::string &substr)
     }
     return false;
 }
+
+inline long get_hash(const std::string& str) {
+    long p = 53;
+    long m = 61566613;
+
+    long roll = 0;
+    for (auto i = str.crbegin(); i < str.crend(); ++i) {
+        roll = (roll * p + int(*i)) % m;
+    }
+
+    return roll;
+}

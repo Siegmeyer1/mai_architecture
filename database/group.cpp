@@ -32,7 +32,6 @@ namespace database
                 create_stmt << "CREATE TABLE IF NOT EXISTS `Group` (`id` INT NOT NULL AUTO_INCREMENT,"
                             << "`title` VARCHAR(256) NULL,"
                             << "`admin_id` INT NOT NULL,"
-                            << "FOREIGN KEY (admin_id) REFERENCES User (id),"
                             << "PRIMARY KEY (`id`),KEY `a_id` (`admin_id`));"
                             << hint,     
                         now;
@@ -41,8 +40,6 @@ namespace database
                 another_create_stmt << "CREATE TABLE IF NOT EXISTS `GroupMembership` ("
                                     << "`group_id` INT NOT NULL,"
                                     << "`user_id` INT NOT NULL,"
-                                    << "FOREIGN KEY (`group_id`) REFERENCES `Group` (id) ON DELETE CASCADE,"
-                                    << "FOREIGN KEY (`user_id`) REFERENCES `User` (id) ON DELETE CASCADE,"
                                     << "PRIMARY KEY (`group_id`, `user_id`));"
                                     << hint,
                                 now;
