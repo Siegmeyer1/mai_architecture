@@ -299,7 +299,7 @@ namespace database
             long tmp_id = 0;
             for (const auto& hint : database::Database::get_all_sharding_hints()) {
                 Statement select(session);
-                select << "SELECT LAST_INSERT_ID()" + hint,
+                select << "SELECT MAX(`id`) from `User`" + hint,
                     into(tmp_id),
                     range(0, 1); //  iterate over result set one row at a time
 
