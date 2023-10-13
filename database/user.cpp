@@ -30,7 +30,7 @@ namespace database
             for (const auto& hint : database::Database::get_all_sharding_hints()) {
                 Statement create_stmt(session);
                 std::cout << "[DEBUG] hint: " << hint << std::endl;
-                create_stmt << "CREATE TABLE IF NOT EXISTS `User` (`id` INT NOT NULL AUTO_INCREMENT,"
+                create_stmt << "CREATE TABLE IF NOT EXISTS `User` (`id` INT NOT NULL,"
                             << "`first_name` VARCHAR(256) NOT NULL,"
                             << "`last_name` VARCHAR(256) NOT NULL,"
                             << "`login` VARCHAR(256) NOT NULL,"
