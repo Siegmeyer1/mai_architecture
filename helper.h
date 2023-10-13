@@ -1,17 +1,20 @@
 #pragma once
+#ifndef HELPER_H
+#define HELPER_H
+
 #include <string>
 #include "Poco/Base64Decoder.h"
 #include <istream>
 #include <ostream>
 
-bool get_identity(const std::string identity, std::string &login, std::string &password)
+inline bool get_identity(const std::string identity, std::string &login, std::string &password)
 {
     std::istringstream istr(identity);
     std::ostringstream ostr;
     Poco::Base64Decoder b64in(istr);
     copy(std::istreambuf_iterator<char>(b64in),
-         std::istreambuf_iterator<char>(),
-         std::ostreambuf_iterator<char>(ostr));
+        std::istreambuf_iterator<char>(),
+        std::ostreambuf_iterator<char>(ostr));
     std::string decoded = ostr.str();
 
     size_t pos = decoded.find(':');
@@ -21,7 +24,7 @@ bool get_identity(const std::string identity, std::string &login, std::string &p
 }
 
 
-bool hasSubstr(const std::string &str, const std::string &substr)
+inline bool hasSubstr(const std::string &str, const std::string &substr)
 {
     if (str.size() < substr.size())
         return false;
@@ -47,3 +50,5 @@ inline long get_hash(const std::string& str) {
 
     return roll;
 }
+
+#endif
