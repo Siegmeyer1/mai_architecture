@@ -130,8 +130,7 @@ namespace database
             User a;
             for (const auto& hint : database::Database::get_all_sharding_hints()) {
                 Poco::Data::Statement select(session);
-                std::cout << "[DEBUG] SELECT id, first_name, last_name, email, title, login, password FROM User where id=" << id << ';' + hint << std::endl;
-                select << "SELECT id, first_name, last_name, email, title, login, password FROM User where id=?;" + hint,
+                select << "SELECT id, first_name, last_name, email, title, login, password FROM User where id=?" << hint,
                     into(a._id),
                     into(a._first_name),
                     into(a._last_name),
@@ -144,18 +143,22 @@ namespace database
 
                 select.execute();
                 Poco::Data::RecordSet rs(select);
-                if (rs.moveFirst()) return a;
+                if (rs.moveFirst()) {
+                    return a;
+                }
             }
         }
 
         catch (Poco::Data::MySQL::ConnectionException &e)
         {
-            std::cout << "connection:" << e.what() << std::endl;
+            std::cout << "connection: " << e.what() << std::endl;
+            std::cout << "details: " << e.displayText() << std::endl;
         }
         catch (Poco::Data::MySQL::StatementException &e)
         {
 
-            std::cout << "statement:" << e.what() << std::endl;
+            std::cout << "statement: " << e.what() << std::endl;
+            std::cout << "details: " << e.displayText() << std::endl;
             
         }
         return {};
@@ -304,9 +307,7 @@ namespace database
                     into(tmp_id),
                     range(0, 1); //  iterate over result set one row at a time
 
-                std::cout << "[DEBUG] tmp_id before execute (" << hint << "): " << tmp_id << std::endl;
                 select.execute();
-                std::cout << "[DEBUG] tmp_id after execute (" << hint << "): " << tmp_id << std::endl;
                 Poco::Data::RecordSet rs(select);
                 if (rs.moveFirst()) {
                     _id = std::max(_id, tmp_id);
@@ -327,7 +328,6 @@ namespace database
                 use(_password);
 
             insert.execute();
-
             std::cout << "inserted:" << _id << std::endl;
         }
         catch (Poco::Data::MySQL::ConnectionException &e)
