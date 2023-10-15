@@ -95,6 +95,7 @@ services:
       - DB_LOGIN=stud
       - DB_PASSWORD=stud
       - DB_DATABASE=archdb
+      - CACHE=cache:6379
     ports:
       - 8080:8080
     entrypoint: /mai_architecture/build/app
@@ -116,6 +117,7 @@ services:
       - DB_LOGIN=stud
       - DB_PASSWORD=stud
       - DB_DATABASE=archdb
+      - CACHE=cache:6379
     ports:
       - 8081:8081
     entrypoint: /mai_architecture/build/other_service

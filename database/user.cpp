@@ -128,7 +128,10 @@ namespace database
         if (use_cache) {
             try {
                 std::string result;
-                if (database::Cache::get().get(id, result)) return fromJSON(result);
+                if (database::Cache::get().get(id, result)) {
+                    std::cout << "[INFO] Cache hit for id=" << id << std::endl;  
+                    return fromJSON(result);
+                }
                 else std::cout << "[INFO] No cache hit for id=" << id << std::endl;    
             }
             catch (std::exception &err) {
@@ -188,7 +191,10 @@ namespace database
         if (use_cache) {
             try {
                 std::string result;
-                if (database::Cache::get().get(login, result)) return fromJSON(result);
+                if (database::Cache::get().get(login, result)) {
+                    std::cout << "[INFO] Cache hit for login=" << login <<std::endl;
+                    return fromJSON(result);
+                }
                 else std::cout << "[INFO] No cache hit for login=" << login <<std::endl;
             }
             catch (std::exception &err) {
