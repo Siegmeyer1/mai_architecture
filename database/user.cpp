@@ -1,5 +1,6 @@
 #include "user.h"
 #include "database.h"
+#include "cache.h"
 #include "../config/config.h"
 #include "../helper.h"
 
@@ -122,8 +123,19 @@ namespace database
         }
         return {};
     }
-    std::optional<User> User::read_by_id(long id)
+    std::optional<User> User::read_by_id(long id, bool use_cache)
     {
+        if (use_cache) {
+            try {
+                std::string result;
+                if (database::Cache::get().get(id, result)) return fromJSON(result);
+                else std::cout << "[INFO] No cache hit for id=" << id << std::endl;    
+            }
+            catch (std::exception &err) {
+                std::cout << "Error: " << err.what() << std::endl;
+            }
+        }
+
         try
         {
             Poco::Data::Session session = database::Database::get().create_session();
@@ -144,6 +156,13 @@ namespace database
                 select.execute();
                 Poco::Data::RecordSet rs(select);
                 if (rs.moveFirst()) {
+                    if (use_cache) {
+                        std::stringstream ss;
+                        Poco::JSON::Stringifier::stringify(a.toJSON(), ss);
+                        std::string message = ss.str();
+                        database::Cache::get().put(a._id, message);
+                        database::Cache::get().put(a._login, message);
+                    }
                     return a;
                 }
             }
@@ -164,8 +183,19 @@ namespace database
         return {};
     }
 
-    std::optional<User> User::read_by_login(std::string &login)
+    std::optional<User> User::read_by_login(std::string &login, bool use_cache)
     {
+        if (use_cache) {
+            try {
+                std::string result;
+                if (database::Cache::get().get(login, result)) return fromJSON(result);
+                else std::cout << "[INFO] No cache hit for login=" << login <<std::endl;
+            }
+            catch (std::exception &err) {
+                std::cout << "Error: " << err.what() << std::endl;
+            }
+        }
+
         try
         {
             Poco::Data::Session session = database::Database::get().create_session();
@@ -185,7 +215,16 @@ namespace database
 
                 select.execute();
                 Poco::Data::RecordSet rs(select);
-                if (rs.moveFirst()) return a;
+                if (rs.moveFirst()){
+                    if (use_cache) {
+                        std::stringstream ss;
+                        Poco::JSON::Stringifier::stringify(a.toJSON(), ss);
+                        std::string message = ss.str();
+                        database::Cache::get().put(a._id, message);
+                        database::Cache::get().put(a._login, message);
+                    }
+                    return a;
+                }
             }
         }
 
@@ -292,7 +331,7 @@ namespace database
         }
     }
 
-    void User::save_to_mysql()
+    void User::save_to_mysql(bool use_cache)
     {
 
         try
@@ -328,6 +367,13 @@ namespace database
                 use(_password);
 
             insert.execute();
+            if (use_cache) {
+                std::stringstream ss;
+                Poco::JSON::Stringifier::stringify(toJSON(), ss);
+                std::string message = ss.str();
+                database::Cache::get().put(_id, message);
+                database::Cache::get().put(_login, message);
+            }
             std::cout << "inserted:" << _id << std::endl;
         }
         catch (Poco::Data::MySQL::ConnectionException &e)

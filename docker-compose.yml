@@ -73,6 +73,17 @@ services:
     volumes:
       - proxysql-data:/var/lib/proxysql
 
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - 6379:6379
+    command: redis-server --save 20 1 --loglevel warning
+    networks:
+      - arch-network
+    volumes:
+      - cache:/data
+
   my_service:
     build:
       context: .
@@ -118,6 +129,7 @@ volumes:
   db-node-ex01-data:
   db-node-ex02-data:
   proxysql-data:
+  cache:
 
 networks:
   arch-network:

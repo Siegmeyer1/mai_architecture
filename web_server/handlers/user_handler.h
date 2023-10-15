@@ -131,16 +131,17 @@ public:
         {
             if ((form.has("id") || form.has("login")) && (request.getMethod() == Poco::Net::HTTPRequest::HTTP_GET))
             {
+                bool use_cache = !form.has("no_cache");
                 std::optional<database::User> result;
                 if (form.has("id"))
                 {
                     long id = atol(form.get("id").c_str());
-                    result = database::User::read_by_id(id);
+                    result = database::User::read_by_id(id, use_cache);
                 }
                 else
                 {
                     std::string login = form.get("login");
-                    result = database::User::read_by_login(login);
+                    result = database::User::read_by_login(login, use_cache);
                 }
                 if (result)
                 {
@@ -259,7 +260,8 @@ public:
 
                     if (check_result)
                     {
-                        user.save_to_mysql();
+                        bool use_cache = !form.has("no_cache");
+                        user.save_to_mysql(use_cache);
                         response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");
