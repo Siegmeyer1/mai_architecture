@@ -8,5 +8,5 @@ export QUEUE_HOST=127.0.0.1:9092
 export QUEUE_TOPIC=event_server
 export QUEUE_GROUP_ID=0
 
-./build/app
+./build/user_writer_service
 #gdb build/app

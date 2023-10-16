@@ -260,8 +260,9 @@ public:
 
                     if (check_result)
                     {
-                        bool use_cache = !form.has("no_cache");
-                        user.save_to_mysql(use_cache);
+                        // bool use_cache = !form.has("no_cache");
+                        // user.save_to_mysql(use_cache);
+                        user.send_to_queue();
                         response.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
                         response.setChunkedTransferEncoding(true);
                         response.setContentType("application/json");
