@@ -128,18 +128,13 @@ services:
       - QUEUE_HOST=kafka-node-1:9092
       - QUEUE_TOPIC=event_server
       - QUEUE_GROUP_ID=0
-    ports:
-      - 8080:8080
     entrypoint: /mai_architecture/build/user_writer_service
     networks:
       - arch-network
     depends_on:
-      sharded-db:
-        condition: service_healthy
-      cache:
-        condition: service_healthy
-      kafka-node-1:
-        condition: service_healthy
+      - sharded-db
+      - cache
+      - kafka-node-1
 
   my_service:
     build:
@@ -163,10 +158,8 @@ services:
       - arch-network
     depends_on:
       cache:
-        condition: service_healthy
+        condition: service_started
       sharded-db:
-        condition: service_healthy
-      kafka-node-1:
         condition: service_healthy
         
   other_server:
@@ -192,8 +185,6 @@ services:
       - arch-network
     depends_on:
       sharded-db:
-        condition: service_healthy
-      cache:
         condition: service_healthy
 
 volumes:
